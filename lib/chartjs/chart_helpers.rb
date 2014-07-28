@@ -61,8 +61,24 @@ module Chartjs
         options.merge! ordinate_scale(combined_data(datasets))
       end
 
-      script = javascript_tag do
-        <<-END.html_safe
+      chart_html = ''
+
+      if options[:turbolinks]
+        chart_html = <<-END
+        var initChart = function() {
+          var data = #{data_for labels, datasets};
+          var opts = #{options.to_json};
+          if (!('animation' in opts)) {
+            opts['animation'] = (typeof Modernizr == 'undefined') || Modernizr.canvas;
+          }
+          var ctx = document.getElementById(#{element_id.to_json}).getContext('2d');
+          new Chart(ctx).#{klass}(data, opts);
+        };
+
+        jQuery(document).on('page:load', initChart);
+        END
+      else
+        chart_html = <<-END
         var initChart = function() {
           var data = #{data_for labels, datasets};
           var opts = #{options.to_json};
@@ -79,6 +95,10 @@ module Chartjs
           window.attachEvent('onload', initChart);
         }
         END
+      end
+
+      script = javascript_tag do
+        chart_html.html_safe
       end
 
       content_tag(:figure, (canvas + legend), class: css_class) + script
