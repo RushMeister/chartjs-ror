@@ -75,7 +75,9 @@ module Chartjs
           new Chart(ctx).#{klass}(data, opts);
         };
 
-        jQuery(document).on('page:load', initChart);
+        jQuery(document).ready(function() {
+          initChart();
+        });
         END
       else
         chart_html = <<-END
